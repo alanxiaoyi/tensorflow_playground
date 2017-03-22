@@ -1,3 +1,14 @@
+This file takes notes of the process to generate a portable graph file for quantization. After quantization, we use the model tool to profile the model. 
+
+The Graph and weights are stored saperately. write_graph will store a .pb file which is the graph. saver.save will save the weights, which is the checkpoint. We can use the tool freeze_graph to combine them and freeze them. Then the newly generated graph is portable and can be read by import_graph_def and use directly (e.g. on a phone or something).
+
+For code details please checkout train.py (train and save the model), test.py (restore a graph from meta graph using import_metagraph), quant_test.py (restore from a feezed graph using import_graph_def)
+
+The data set I use is the traffic sign data set provided by Udacity Nano-Car degree with 30x30x3 images
+
+The model is a LeNet model.
+
+
 build the freeze_graph tool:
 bazel build --config opt tensorflow/python/tools:freeze_graph
 
@@ -6,7 +17,6 @@ https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/fre
 
 sudo bazel-bin/tensorflow/python/tools/freeze_graph --input_graph=../quant_profile/model.pb --input_checkpoint=../quant_profile/lenet  --output_graph=../quant_profile/frozen_model.pb --output_node_names=accu --input_binary=true
 
-So the graph and weights are stored saperately. write_graph will store a .pb file which is the graph. saver.save will save the weights, which is the checkpoint. We can use the tool freeze_graph to combine them and freeze them. Then the newly generated graph is portable and can be read by import_graph_def and use directly (e.g. on a phone or something).
 
 
 Quantize a graph:
@@ -22,6 +32,9 @@ $bazel build --config opt tensorflow/tools/benchmark:benchmark_model
 using modeling tool:
 bazel-bin/tensorflow/tools/benchmark/benchmark_model --graph=../quant_profile/frozen_model.pb --input_layer="input_x:0,input_y:0" --input_layer_shape="20,30,30,3:20" --input_layer_type="float,int32" --output_layer="accu:0" &> ../quant_profile/non_quant_stats.txt
 
+
+
+Some references:
 
 restore from metagraph
 
